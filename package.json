@@ -1,0 +1,41 @@
+{
+  "name": "sequelize-graphql-schema",
+  "version": "0.0.0",
+  "description": "Schema Generator for sequelize-graphql, including create, update, delete, and mutation subscriptions.",
+  "main": "index.js",
+  "scripts": {
+    "babel-node": "babel-node ./src",
+    "test": "npm run test-unit && npm run test-integration",
+    "test-unit": "mocha test/unit/*.test.js",
+    "test-integration": "mocha test/integration/*.test.js",
+    "clean": "rm -rf dist && mkdir dist",
+    "build-server": "babel -d ./dist ./src --copy-files",
+    "build": "npm run clean && npm run build-server"
+  },
+  "keywords": [
+    "graphql",
+    "sequelize",
+    "crud",
+    "schema",
+    "postgres",
+    "mysql",
+    "msql"
+  ],
+  "author": "Christopher Jensen",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/node": "^7.0.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/preset-env": "^7.0.0"
+  },
+  "dependencies": {
+    "graphql-subscriptions": "^0.5.8",
+    "underscore": "^1.9.1"
+  },
+  "peerDependencies": {
+    "graphql-sequelize": "^8.3.1",
+    "graphql": "^0.13.2"
+  }
+}

@@ -1,0 +1,11 @@
+ {
+    "presets": [
+      ["@babel/env", {
+        "debug": true,
+        "targets": "> 0.25%, not dead"
+      }]
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-object-rest-spread"
+    ]
+  }
