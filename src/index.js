@@ -198,17 +198,68 @@ export const getMutatationObject = (mod, options) => {
  * @param {Sequelize Model} mod 
  * @returns {Object}
  */
-const getSubscriptionObject = (mod, options) => {
+
+const getSubscriptionObject = (mod) => {
+
+  const defaultArgs = defaultListArgs(mod);
   return {
       [`${mod.name.toLowerCase()}_changed`]: {
         type: modelTypes.find(modelT => modelT.name == mod.name),
-        description: `Subscribes to ${mod.name} changes.  
-        The delete object will return an object that 
-        represents the where clause used to delete.`,
-        subscribe: () => options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`)        
+        args: defaultArgs,
+        description: `Subscribes to ${mod.name} changes.  The delete object will return an object that represents the where clause used to delete.`,
+        subscribe: withFilter(
+          () => pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`),
+          (payload, variables, more, more2) => {
+            // if no where clause is provided, send what is already there
+            if(!variables["where"]) return true;
+            const rtn = whereMatch(payload[`${mod.name.toLowerCase()}_changed`], variables["where"]);
+            return rtn ? true : false
+          },
+        )       
       }
   };
 }
+
+const whereMatch = (obj, where) => {
+  const keys = Object.keys(where);
+  let subRtn = true;
+  const rtn = keys.length > 0 ? 
+    keys.reduce(
+      (prev, key, i) => { 
+        if(typeof where[key] === "object"){
+          // console.log("call it again.", key)
+          subRtn = (whereMatch(obj[key], where[key] ));
+        }
+        // console.log("obj[key] === where[key]", typeof obj[key] === "object", key, obj[key], where[key].toString(), obj[key] === where[key]);
+        return ( prev && subRtn && 
+          (typeof obj[key] === "object" ? true : obj[key] === where[key] )
+        ); 
+      }, true
+    ) 
+  : true;
+  // console.log("rtn, obj[key], obj, where: ",
+  //           rtn ? true : false,
+  //           obj[keys[0]],
+  //           obj,
+  //           where
+  //         );
+  return rtn ? true : false;
+}
+
+
+
+
+// const getSubscriptionObject = (mod, options) => {
+//   return {
+//       [`${mod.name.toLowerCase()}_changed`]: {
+//         type: modelTypes.find(modelT => modelT.name == mod.name),
+//         description: `Subscribes to ${mod.name} changes.  
+//         The delete object will return an object that 
+//         represents the where clause used to delete.`,
+//         subscribe: () => options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`)        
+//       }
+//   };
+// }
 
 
 

@@ -13,6 +13,8 @@ var _underscore = require("underscore");
 
 var _graphqlSubscriptions = require("graphql-subscriptions");
 
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 function _readOnlyError(name) { throw new Error("\"" + name + "\" is read-only"); }
 
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
@@ -316,17 +318,56 @@ var getMutatationObject = function getMutatationObject(mod, options) {
 
 exports.getMutatationObject = getMutatationObject;
 
-var getSubscriptionObject = function getSubscriptionObject(mod, options) {
+var getSubscriptionObject = function getSubscriptionObject(mod) {
+  var defaultArgs = (0, _graphqlSequelize.defaultListArgs)(mod);
   return _defineProperty({}, "".concat(mod.name.toLowerCase(), "_changed"), {
     type: modelTypes.find(function (modelT) {
       return modelT.name == mod.name;
     }),
-    description: "Subscribes to ".concat(mod.name, " changes.  \n        The delete object will return an object that \n        represents the where clause used to delete."),
-    subscribe: function subscribe() {
-      return options.pubsub.asyncIterator("".concat(mod.name.toLowerCase(), "_changed"));
-    }
+    args: defaultArgs,
+    description: "Subscribes to ".concat(mod.name, " changes.  The delete object will return an object that represents the where clause used to delete."),
+    subscribe: (0, _graphqlSubscriptions.withFilter)(function () {
+      return pubsub.asyncIterator("".concat(mod.name.toLowerCase(), "_changed"));
+    }, function (payload, variables, more, more2) {
+      // if no where clause is provided, send what is already there
+      if (!variables["where"]) return true;
+      var rtn = whereMatch(payload["".concat(mod.name.toLowerCase(), "_changed")], variables["where"]);
+      return rtn ? true : false;
+    })
   });
 };
+
+var whereMatch = function whereMatch(obj, where) {
+  var keys = Object.keys(where);
+  var subRtn = true;
+  var rtn = keys.length > 0 ? keys.reduce(function (prev, key, i) {
+    if (_typeof(where[key]) === "object") {
+      // console.log("call it again.", key)
+      subRtn = whereMatch(obj[key], where[key]);
+    } // console.log("obj[key] === where[key]", typeof obj[key] === "object", key, obj[key], where[key].toString(), obj[key] === where[key]);
+
+
+    return prev && subRtn && (_typeof(obj[key]) === "object" ? true : obj[key] === where[key]);
+  }, true) : true; // console.log("rtn, obj[key], obj, where: ",
+  //           rtn ? true : false,
+  //           obj[keys[0]],
+  //           obj,
+  //           where
+  //         );
+
+  return rtn ? true : false;
+}; // const getSubscriptionObject = (mod, options) => {
+//   return {
+//       [`${mod.name.toLowerCase()}_changed`]: {
+//         type: modelTypes.find(modelT => modelT.name == mod.name),
+//         description: `Subscribes to ${mod.name} changes.  
+//         The delete object will return an object that 
+//         represents the where clause used to delete.`,
+//         subscribe: () => options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`)        
+//       }
+//   };
+// }
+
 
 var getGenericSchemaObjectFromModel = function getGenericSchemaObjectFromModel(md, options, modelTypes) {
   var _modObj;
