@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.schema = exports.getMutatationObject = exports.defaultOptions = void 0;
 
+require("core-js/modules/es6.promise");
+
 var _graphqlSequelize = require("graphql-sequelize");
 
 var _graphql = require("graphql");
@@ -13,21 +15,9 @@ var _underscore = require("underscore");
 
 var _graphqlSubscriptions = require("graphql-subscriptions");
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-function _readOnlyError(name) { throw new Error("\"" + name + "\" is read-only"); }
-
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 
 function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
@@ -37,56 +27,38 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
-var CLASSMETHODS = 'classMethods';
-var ASSOCIATE = 'associate';
-var modelTypes = [];
-var modelNamesArray;
-var models;
-var authenticated;
+const CLASSMETHODS = 'classMethods';
+const ASSOCIATE = 'associate';
+let modelTypes = [];
+let modelNamesArray;
+let models;
+let authenticated;
 /**
  * @property pubSub - needs to implement asyncIterator, and publish functions
  * @property
  */
 
-var defaultOptions = {
+const defaultOptions = {
   pubSub: {
-    publish: function publish() {},
-    asyncIterator: function asyncIterator() {}
+    publish: () => {},
+    asyncIterator: () => {}
   },
-  authenticated: function authenticated(resolver) {
-    return (
-      /*#__PURE__*/
-      function () {
-        var _ref = _asyncToGenerator(
-        /*#__PURE__*/
-        regeneratorRuntime.mark(function _callee(parent, args, context, info) {
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  return _context.abrupt("return", resolver(parent, args, context, info));
+  authenticated: resolver =>
+  /*#__PURE__*/
+  function () {
+    var _ref = _asyncToGenerator(function* (parent, args, context, info) {
+      return resolver(parent, args, context, info);
+    });
 
-                case 1:
-                case "end":
-                  return _context.stop();
-              }
-            }
-          }, _callee, this);
-        }));
-
-        return function (_x, _x2, _x3, _x4) {
-          return _ref.apply(this, arguments);
-        };
-      }()
-    );
-  }
+    return function (_x, _x2, _x3, _x4) {
+      return _ref.apply(this, arguments);
+    };
+  }()
 };
 exports.defaultOptions = defaultOptions;
 
-var getAssociations = function getAssociations(mod, depth) {
-  var md = models[modelNamesArray.find(function (m) {
-    return m === mod.name;
-  })]; // console.log(Object.keys(models[mod.name].options[CLASSMETHODS][ASSOCIATE]))
+const getAssociations = (mod, depth) => {
+  const md = models[modelNamesArray.find(m => m === mod.name)]; // console.log(Object.keys(models[mod.name].options[CLASSMETHODS][ASSOCIATE]))
 
   if (CLASSMETHODS in models[mod.name].options && ASSOCIATE in models[mod.name].options[CLASSMETHODS] && typeof models[mod.name].options.classMethods.getGraphQlAssociations == "function") {
     // console.log("we called it!")
@@ -96,58 +68,52 @@ var getAssociations = function getAssociations(mod, depth) {
   return {};
 };
 
-var getModelGraphQLType = function getModelGraphQLType(md, depth, model_suffix) {
+const getModelGraphQLType = (md, depth, model_suffix) => {
   depth = depth + 1;
-  var found = modelTypes.find(function (t) {
-    return t.name == md.name + model_suffix;
-  });
+  let found = modelTypes.find(t => t.name == md.name + model_suffix);
   if (found) return found;
-  var associations = {};
+  let associations = {};
 
   if (depth < 12) {
     associations = getAssociations(md, depth);
   } // console.log(associations);
 
 
-  var fields = _objectSpread({}, associations, (0, _graphqlSequelize.attributeFields)(md, {
+  const fields = _objectSpread({}, associations, (0, _graphqlSequelize.attributeFields)(md, {
     globalId: true
   }));
 
-  var modType = new _graphql.GraphQLObjectType({
+  const modType = new _graphql.GraphQLObjectType({
     name: md.name + (model_suffix ? model_suffix : ""),
-    description: "Generated model for ".concat(md.name),
+    description: `Generated model for ${md.name}`,
     //fields: _.assign(fields)
-    fields: function fields() {
-      return _objectSpread({}, getAssociations(md, depth), (0, _graphqlSequelize.attributeFields)(md, {
-        globalId: true
-      }));
-    }
+    fields: () => _objectSpread({}, getAssociations(md, depth), (0, _graphqlSequelize.attributeFields)(md, {
+      globalId: true
+    }))
   }); // console.log("before: ", modelTypes.length)
   // modelTypes = found ? modelTypes.map( m => m.name == md.name ? modType : m) : [...modelTypes, modType];
 
-  modelTypes = _toConsumableArray(modelTypes).concat([modType]); // console.log("after: ", modelTypes.length)
+  modelTypes = [...modelTypes, modType]; // console.log("after: ", modelTypes.length)
 
   return modType;
 };
 
-var getMutatationObject = function getMutatationObject(mod, options) {
-  var _ref4;
-
+const getMutatationObject = (mod, options) => {
   options = options ? options : defaultOptions;
-  var inputArgs = (0, _graphqlSequelize.attributeFields)(mod);
-  var updateArgs;
+  const inputArgs = (0, _graphqlSequelize.attributeFields)(mod);
+  let updateArgs;
 
-  var deleted = inputArgs["".concat(mod.name.toLowerCase(), "_id")],
-      createArgs = _objectWithoutProperties(inputArgs, ["".concat(mod.name.toLowerCase(), "_id")]);
+  const deleted = inputArgs[`${mod.name.toLowerCase()}_id`],
+        createArgs = _objectWithoutProperties(inputArgs, [`${mod.name.toLowerCase()}_id`]);
 
-  var deleteArgs = (0, _graphqlSequelize.defaultListArgs)(mod); // make other fields not required on update
+  const deleteArgs = (0, _graphqlSequelize.defaultListArgs)(mod); // make other fields not required on update
 
-  Object.keys(inputArgs).map(function (k) {
-    var kObj = inputArgs[k]; //console.log(`${mod.name}: ${k}: ${JSON.stringify(kObj.type)}`);
+  Object.keys(inputArgs).map(k => {
+    let kObj = inputArgs[k]; //console.log(`${mod.name}: ${k}: ${JSON.stringify(kObj.type)}`);
 
-    if (kObj.type.toString().endsWith("!") && k.toLowerCase().includes("".concat(mod.name, "_id")) == false) {
-      var obj_type = kObj.type.toString().toLowerCase();
-      var type_to_assign; // console.log(obj_type);
+    if (kObj.type.toString().endsWith("!") && k.toLowerCase().includes(`${mod.name}_id`) == false) {
+      let obj_type = kObj.type.toString().toLowerCase();
+      let type_to_assign; // console.log(obj_type);
 
       switch (obj_type) {
         case "int":
@@ -182,132 +148,99 @@ var getMutatationObject = function getMutatationObject(mod, options) {
       kObj.type = type_to_assign;
     }
 
-    updateArgs = _objectSpread({}, updateArgs, _defineProperty({}, k, kObj));
+    updateArgs = _objectSpread({}, updateArgs, {
+      [k]: kObj
+    });
   });
-  return _ref4 = {}, _defineProperty(_ref4, "create".concat(titleCase(mod.name)), {
-    type: modelTypes.find(function (modelT) {
-      return modelT.name == mod.name;
-    }),
-    args: _underscore._.assign(createArgs),
-    description: "Creates a new ".concat(mod.name),
-    resolve: options.authenticated(
-    /*#__PURE__*/
-    function () {
-      var _ref2 = _asyncToGenerator(
+  return {
+    [`create${titleCase(mod.name)}`]: {
+      type: modelTypes.find(modelT => modelT.name == mod.name),
+      args: _underscore._.assign(createArgs),
+      description: `Creates a new ${mod.name}`,
+      resolve: options.authenticated(
       /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee2(obj, args) {
-        var ret;
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
-                _context2.next = 3;
-                return mod.create(args);
+      function () {
+        var _ref2 = _asyncToGenerator(function* (obj, args) {
+          if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+          const ret = yield mod.create(args);
+          if (typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(ret);
 
-              case 3:
-                ret = _context2.sent;
-                if (typeof mod.options.classMethods.postMutation === "function") ret = (_readOnlyError("ret"), mod.options.classMethods.postMutation(ret));
-
-                if (typeof options.pubsub.publish === "function") {
-                  options.pubsub.publish("".concat(mod.name.toLowerCase(), "_changed"), _defineProperty({}, "".concat(mod.name.toLowerCase(), "_changed"), ret.dataValues));
-                }
-
-                return _context2.abrupt("return", new Promise(function (rsv, rej) {
-                  return rsv(ret);
-                }));
-
-              case 7:
-              case "end":
-                return _context2.stop();
-            }
+          if (typeof options.pubsub.publish === "function") {
+            options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
+              [`${mod.name.toLowerCase()}_changed`]: ret.dataValues
+            });
           }
-        }, _callee2, this);
-      }));
 
-      return function (_x5, _x6) {
-        return _ref2.apply(this, arguments);
-      };
-    }())
-  }), _defineProperty(_ref4, "update".concat(titleCase(mod.name)), {
-    type: modelTypes.find(function (modelT) {
-      return modelT.name == mod.name;
-    }),
-    args: _underscore._.assign(updateArgs),
-    description: "Updates an existing ".concat(mod.name),
-    resolve: options.authenticated(
-    /*#__PURE__*/
-    function () {
-      var _ref3 = _asyncToGenerator(
+          return new Promise((rsv, rej) => rsv(ret));
+        });
+
+        return function (_x5, _x6) {
+          return _ref2.apply(this, arguments);
+        };
+      }())
+    },
+    [`update${titleCase(mod.name)}`]: {
+      type: modelTypes.find(modelT => modelT.name == mod.name),
+      args: _underscore._.assign(updateArgs),
+      description: `Updates an existing ${mod.name}`,
+      resolve: options.authenticated(
       /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee3(obj, args) {
-        var ret;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                // return mod.save(args, {returning: true, validate: false});
-                if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
-                _context3.next = 3;
-                return mod.update(args, {
-                  where: _defineProperty({}, "".concat(mod.name.toLowerCase(), "_id"), args["".concat(mod.name.toLowerCase(), "_id")])
-                });
-
-              case 3:
-                _context3.next = 5;
-                return mod.findById(args["".concat(mod.name.toLowerCase(), "_id")]);
-
-              case 5:
-                ret = _context3.sent;
-                // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
-                if (typeof mod.options.classMethods.postMutation === "function") ret = (_readOnlyError("ret"), mod.options.classMethods.postMutation(args));
-
-                if (typeof options.pubsub.publish === "function") {
-                  options.pubsub.publish("".concat(mod.name.toLowerCase(), "_changed"), _defineProperty({}, "".concat(mod.name.toLowerCase(), "_changed"), ret.dataValues));
-                } // console.log(ret);
-
-
-                return _context3.abrupt("return", new Promise(function (rsv, rej) {
-                  return rsv(ret);
-                }));
-
-              case 9:
-              case "end":
-                return _context3.stop();
+      function () {
+        var _ref3 = _asyncToGenerator(function* (obj, args) {
+          // return mod.save(args, {returning: true, validate: false});
+          if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+          yield mod.update(args, {
+            where: {
+              [`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]
             }
-          }
-        }, _callee3, this);
-      }));
+          });
+          const ret = yield mod.findById(args[`${mod.name.toLowerCase()}_id`]); // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-      return function (_x7, _x8) {
-        return _ref3.apply(this, arguments);
-      };
-    }())
-  }), _defineProperty(_ref4, "delete".concat(titleCase(mod.name)), {
-    type: modelTypes.find(function (modelT) {
-      return modelT.name == mod.name;
-    }),
-    args: _underscore._.assign(deleteArgs),
-    description: "Deletes an amount of ".concat(mod.name, "s"),
-    resolve: options.authenticated(function (obj, args, context, info) {
-      // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
-      if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
-      var where = Object.keys(args.where).reduce(function (prev, k, i) {
-        var value = args.where[k]; // console.log(typeof value);
+          if (typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(args);
 
-        return _objectSpread({}, prev, _defineProperty({}, k, typeof value == 'function' ? value(info.variableValues) : value));
-      }, {}); // console.log(where);
+          if (typeof options.pubsub.publish === "function") {
+            options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
+              [`${mod.name.toLowerCase()}_changed`]: ret.dataValues
+            });
+          } // console.log(ret);
 
-      if (typeof options.pubsub.publish === "function") {
-        options.pubsub.publish("".concat(mod.name.toLowerCase(), "_changed"), _defineProperty({}, "".concat(mod.name.toLowerCase(), "_changed"), obj));
-      }
 
-      if (typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(args);
-      return mod.destroy({
-        where: where
-      });
-    })
-  }), _ref4;
+          return new Promise((rsv, rej) => rsv(ret));
+        });
+
+        return function (_x7, _x8) {
+          return _ref3.apply(this, arguments);
+        };
+      }())
+    },
+    [`delete${titleCase(mod.name)}`]: {
+      type: modelTypes.find(modelT => modelT.name == mod.name),
+      args: _underscore._.assign(deleteArgs),
+      description: `Deletes an amount of ${mod.name}s`,
+      resolve: options.authenticated((obj, args, context, info) => {
+        // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
+        if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+        let where = Object.keys(args.where).reduce((prev, k, i) => {
+          let value = args.where[k]; // console.log(typeof value);
+
+          return _objectSpread({}, prev, {
+            [k]: typeof value == 'function' ? value(info.variableValues) : value
+          });
+        }, {}); // console.log(where);
+
+        if (typeof options.pubsub.publish === "function") {
+          options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
+            [`${mod.name.toLowerCase()}_changed`]: obj
+          });
+        }
+
+        if (typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(args);
+        return mod.destroy({
+          where
+        });
+      })
+    }
+  };
 };
 /**
  *  
@@ -318,36 +251,34 @@ var getMutatationObject = function getMutatationObject(mod, options) {
 
 exports.getMutatationObject = getMutatationObject;
 
-var getSubscriptionObject = function getSubscriptionObject(mod) {
-  var defaultArgs = (0, _graphqlSequelize.defaultListArgs)(mod);
-  return _defineProperty({}, "".concat(mod.name.toLowerCase(), "_changed"), {
-    type: modelTypes.find(function (modelT) {
-      return modelT.name == mod.name;
-    }),
-    args: defaultArgs,
-    description: "Subscribes to ".concat(mod.name, " changes.  The delete object will return an object that represents the where clause used to delete."),
-    subscribe: (0, _graphqlSubscriptions.withFilter)(function () {
-      return pubsub.asyncIterator("".concat(mod.name.toLowerCase(), "_changed"));
-    }, function (payload, variables, more, more2) {
-      // if no where clause is provided, send what is already there
-      if (!variables["where"]) return true;
-      var rtn = whereMatch(payload["".concat(mod.name.toLowerCase(), "_changed")], variables["where"]);
-      return rtn ? true : false;
-    })
-  });
+const getSubscriptionObject = mod => {
+  const defaultArgs = (0, _graphqlSequelize.defaultListArgs)(mod);
+  return {
+    [`${mod.name.toLowerCase()}_changed`]: {
+      type: modelTypes.find(modelT => modelT.name == mod.name),
+      args: defaultArgs,
+      description: `Subscribes to ${mod.name} changes.  The delete object will return an object that represents the where clause used to delete.`,
+      subscribe: (0, _graphqlSubscriptions.withFilter)(() => pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`), (payload, variables, more, more2) => {
+        // if no where clause is provided, send what is already there
+        if (!variables["where"]) return true;
+        const rtn = whereMatch(payload[`${mod.name.toLowerCase()}_changed`], variables["where"]);
+        return rtn ? true : false;
+      })
+    }
+  };
 };
 
-var whereMatch = function whereMatch(obj, where) {
-  var keys = Object.keys(where);
-  var subRtn = true;
-  var rtn = keys.length > 0 ? keys.reduce(function (prev, key, i) {
-    if (_typeof(where[key]) === "object") {
+const whereMatch = (obj, where) => {
+  const keys = Object.keys(where);
+  let subRtn = true;
+  const rtn = keys.length > 0 ? keys.reduce((prev, key, i) => {
+    if (typeof where[key] === "object") {
       // console.log("call it again.", key)
       subRtn = whereMatch(obj[key], where[key]);
     } // console.log("obj[key] === where[key]", typeof obj[key] === "object", key, obj[key], where[key].toString(), obj[key] === where[key]);
 
 
-    return prev && subRtn && (_typeof(obj[key]) === "object" ? true : obj[key] === where[key]);
+    return prev && subRtn && (typeof obj[key] === "object" ? true : obj[key] === where[key]);
   }, true) : true; // console.log("rtn, obj[key], obj, where: ",
   //           rtn ? true : false,
   //           obj[keys[0]],
@@ -369,44 +300,43 @@ var whereMatch = function whereMatch(obj, where) {
 // }
 
 
-var getGenericSchemaObjectFromModel = function getGenericSchemaObjectFromModel(md, options, modelTypes) {
-  var _modObj;
-
+const getGenericSchemaObjectFromModel = (md, options, modelTypes) => {
   // console.log(`schemaGenerators start, ${md.name}:`, JSON.stringify(Object.keys(md.sequelize.models.document.tableAttributes.shipto.references), null, '\t'))
   // console.log("", modelTypes);
   // const associations = {};
   //const inputArgs = attributeFields(md);
-  var inputArgs = (0, _graphqlSequelize.defaultListArgs)(md);
-  var found_type = modelTypes ? modelTypes.find(function (modelT) {
-    return modelT.name == md.name + "_full";
-  }) : undefined;
-  found_type = found_type ? found_type : modelTypes.find(function (modelT) {
-    return modelT.name == md.name;
-  }); // console.log(JSON.stringify(found_type));
+  const inputArgs = (0, _graphqlSequelize.defaultListArgs)(md);
+  let found_type = modelTypes ? modelTypes.find(modelT => modelT.name == md.name + "_full") : undefined;
+  found_type = found_type ? found_type : modelTypes.find(modelT => modelT.name == md.name); // console.log(JSON.stringify(found_type));
 
-  var modObj = (_modObj = {}, _defineProperty(_modObj, md.name, {
-    type: found_type,
-    //getModelGraphQLType(md, associations),
-    // args will automatically be mapped to `where`
-    args: _defineProperty({}, md.primaryKeyAttribute, {
-      description: "".concat(md.primaryKeyAttribute, " of the ").concat(md.name),
-      type: new _graphql.GraphQLNonNull(_graphql.GraphQLInt)
-    }),
-    resolve: options.authenticated((0, _graphqlSequelize.resolver)(md, {
-      dataLoader: true
-    }))
-  }), _defineProperty(_modObj, "".concat(md.name, "s"), {
-    type: new _graphql.GraphQLList(found_type),
-    args: _objectSpread({}, inputArgs, {
-      offset: {
-        description: "Sets how many to skip when limiting ".concat(md.name, "s."),
-        type: _graphql.GraphQLInt
-      }
-    }),
-    resolve: options.authenticated((0, _graphqlSequelize.resolver)(md, {
-      dataLoader: true
-    }))
-  }), _modObj);
+  const modObj = {
+    [md.name]: {
+      type: found_type,
+      //getModelGraphQLType(md, associations),
+      // args will automatically be mapped to `where`
+      args: {
+        [md.primaryKeyAttribute]: {
+          description: `${md.primaryKeyAttribute} of the ${md.name}`,
+          type: new _graphql.GraphQLNonNull(_graphql.GraphQLInt)
+        }
+      },
+      resolve: options.authenticated((0, _graphqlSequelize.resolver)(md, {
+        dataLoader: true
+      }))
+    },
+    [`${md.name}s`]: {
+      type: new _graphql.GraphQLList(found_type),
+      args: _objectSpread({}, inputArgs, {
+        offset: {
+          description: `Sets how many to skip when limiting ${md.name}s.`,
+          type: _graphql.GraphQLInt
+        }
+      }),
+      resolve: options.authenticated((0, _graphqlSequelize.resolver)(md, {
+        dataLoader: true
+      }))
+    }
+  };
   return modObj;
 };
 
@@ -424,21 +354,17 @@ function titleCase(str) {
  */
 
 
-var schema = function schema(modeles, options) {
+const schema = function schema(modeles, options) {
   models = modeles;
   authenticated = options.authenticated;
-  modelNamesArray = Object.keys(models).filter(function (md) {
-    return md.toLowerCase() != "sequelize";
-  });
-  modelNamesArray.map(function (modelName) {
-    return getModelGraphQLType(models[modelName], 0);
-  }
+  modelNamesArray = Object.keys(models).filter(md => md.toLowerCase() != "sequelize");
+  modelNamesArray.map(modelName => getModelGraphQLType(models[modelName], 0)
   /* console.log(modelName) */
   );
   return new _graphql.GraphQLSchema({
     query: new _graphql.GraphQLObjectType({
       name: 'RootQueryType',
-      fields: _objectSpread({}, modelNamesArray.reduce(function (prev, mod, i) {
+      fields: _objectSpread({}, modelNamesArray.reduce((prev, mod, i) => {
         if (modelNamesArray.length - 1 === i) {
           console.log("last one");
         }
@@ -448,13 +374,13 @@ var schema = function schema(modeles, options) {
     }),
     mutation: new _graphql.GraphQLObjectType({
       name: 'RootMutationType',
-      fields: _objectSpread({}, modelNamesArray.reduce(function (prev, mod, i) {
+      fields: _objectSpread({}, modelNamesArray.reduce((prev, mod, i) => {
         return _objectSpread({}, prev, getMutatationObject(models[mod], options));
       }, {}))
     }),
     subscription: new _graphql.GraphQLObjectType({
       name: 'Subscription',
-      fields: _objectSpread({}, modelNamesArray.reduce(function (prev, mod, i) {
+      fields: _objectSpread({}, modelNamesArray.reduce((prev, mod, i) => {
         return _objectSpread({}, prev, getSubscriptionObject(models[mod], options));
       }, {}))
     })

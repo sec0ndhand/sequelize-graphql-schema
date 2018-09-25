@@ -2,7 +2,8 @@
     "presets": [
       ["@babel/env", {
         "debug": true,
-        "targets": "> 0.25%, not dead"
+        "targets": {node: "6"},
+	"useBuiltIns": "usage"
       }]
     ],
     "plugins": [

@@ -1,5 +1,5 @@
 "use strict";
 
-var subscription = function subscription(models) {};
+const subscription = function subscription(models) {};
 
 module.exports = subscription;
