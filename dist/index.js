@@ -152,6 +152,9 @@ const getMutatationObject = (mod, options) => {
       [k]: kObj
     });
   });
+  const preMutationDefined = mod && mod.options && mod.options.classMethods && typeof mod.options.classMethods.preMutation === "function";
+  const postMutationDefined = mod && mod.options && mod.options.classMethods && typeof mod.options.classMethods.postMutation === "function";
+  const pubSubIsDefined = options && options.pubsub && options.pubsub.publish && typeof options.pubsub.publish === "function";
   return {
     [`create${titleCase(mod.name)}`]: {
       type: modelTypes.find(modelT => modelT.name == mod.name),
@@ -161,11 +164,11 @@ const getMutatationObject = (mod, options) => {
       /*#__PURE__*/
       function () {
         var _ref2 = _asyncToGenerator(function* (obj, args) {
-          if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+          if (preMutationDefined) args = mod.options.classMethods.preMutation(args);
           const ret = yield mod.create(args);
-          if (typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(ret);
+          if (postMutationDefined) ret = mod.options.classMethods.postMutation(ret);
 
-          if (typeof options.pubsub.publish === "function") {
+          if (pubSubIsDefined) {
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
               [`${mod.name.toLowerCase()}_changed`]: ret.dataValues
             });
@@ -188,7 +191,7 @@ const getMutatationObject = (mod, options) => {
       function () {
         var _ref3 = _asyncToGenerator(function* (obj, args) {
           // return mod.save(args, {returning: true, validate: false});
-          if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+          if (preMutationDefined) args = mod.options.classMethods.preMutation(args);
           yield mod.update(args, {
             where: {
               [`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]
@@ -196,9 +199,9 @@ const getMutatationObject = (mod, options) => {
           });
           const ret = yield mod.findById(args[`${mod.name.toLowerCase()}_id`]); // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-          if (typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(args);
+          if (postMutationDefined) ret = mod.options.classMethods.postMutation(args);
 
-          if (typeof options.pubsub.publish === "function") {
+          if (pubSubIsDefined) {
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
               [`${mod.name.toLowerCase()}_changed`]: ret.dataValues
             });
@@ -219,7 +222,7 @@ const getMutatationObject = (mod, options) => {
       description: `Deletes an amount of ${mod.name}s`,
       resolve: options.authenticated((obj, args, context, info) => {
         // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
-        if (typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+        if (preMutationDefined) args = mod.options.classMethods.preMutation(args);
         let where = Object.keys(args.where).reduce((prev, k, i) => {
           let value = args.where[k]; // console.log(typeof value);
 
@@ -228,13 +231,13 @@ const getMutatationObject = (mod, options) => {
           });
         }, {}); // console.log(where);
 
-        if (typeof options.pubsub.publish === "function") {
+        if (pubSubIsDefined) {
           options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
             [`${mod.name.toLowerCase()}_changed`]: obj
           });
         }
 
-        if (typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(args);
+        if (postMutationDefined) ret = mod.options.classMethods.postMutation(args);
         return mod.destroy({
           where
         });

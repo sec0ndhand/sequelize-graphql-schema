@@ -130,16 +130,25 @@ export const getMutatationObject = (mod, options) => {
     updateArgs = {...updateArgs, [k]: kObj};
   });
 
+  const preMutationDefined = mod && mod.options && mod.options.classMethods &&
+    (typeof mod.options.classMethods.preMutation === "function")
+
+  const postMutationDefined = mod && mod.options && mod.options.classMethods &&
+    (typeof mod.options.classMethods.postMutation === "function")
+
+  const pubSubIsDefined = options && options.pubsub && options.pubsub.publish &&
+    (typeof options.pubsub.publish === "function")
+
   return {
     [`create${titleCase(mod.name)}`]: {
       type: modelTypes.find(modelT => modelT.name == mod.name),
       args: _.assign(createArgs),
       description: `Creates a new ${mod.name}`,
       resolve: options.authenticated(async (obj, args) => {
-        if(typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+        if(preMutationDefined) args = mod.options.classMethods.preMutation(args);
         const ret = await mod.create(args);
-        if(typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(ret);
-        if (typeof options.pubsub.publish === "function"){
+        if(postMutationDefined) ret = mod.options.classMethods.postMutation(ret);
+        if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
         }
         return new Promise((rsv, rej) => rsv(ret) );
@@ -152,15 +161,15 @@ export const getMutatationObject = (mod, options) => {
       description: `Updates an existing ${mod.name}`,
       resolve: options.authenticated(async (obj, args) => {
         // return mod.save(args, {returning: true, validate: false});
-        if(typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+        if(preMutationDefined) args = mod.options.classMethods.preMutation(args);
         await mod.update(args, { where: {[`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]}});
         
         const ret = await mod.findById(args[`${mod.name.toLowerCase()}_id`]);
         // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-        if(typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(args);
+        if(postMutationDefined) ret = mod.options.classMethods.postMutation(args);
 
-        if (typeof options.pubsub.publish === "function"){
+        if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
         }
         // console.log(ret);
@@ -174,7 +183,7 @@ export const getMutatationObject = (mod, options) => {
       resolve: options.authenticated((obj, args, context, info) => {
         // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
         
-        if(typeof mod.options.classMethods.preMutation === "function") args = mod.options.classMethods.preMutation(args);
+        if(preMutationDefined) args = mod.options.classMethods.preMutation(args);
         let where = Object.keys(args.where).reduce((prev, k, i) => {
           let value = args.where[k];
           // console.log(typeof value);
@@ -182,11 +191,11 @@ export const getMutatationObject = (mod, options) => {
         }, {})
         // console.log(where);
 
-        if (typeof options.pubsub.publish === "function"){
+        if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:obj});
         }
 
-        if(typeof mod.options.classMethods.postMutation === "function") ret = mod.options.classMethods.postMutation(args);
+        if(postMutationDefined) ret = mod.options.classMethods.postMutation(args);
         return mod.destroy({where})
       })
     },
