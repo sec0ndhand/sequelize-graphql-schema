@@ -264,8 +264,8 @@ const getSubscriptionObject = (mod, options) => {
       description: `Subscribes to ${mod.name} changes.  The delete object will return an object that represents the where clause used to delete.`,
       subscribe: (0, _graphqlSubscriptions.withFilter)(() => {
         if (pubSubIsDefined) {
-          options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`);
-        }
+          return options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`);
+        } else return {};
       }, (payload, variables, more, more2) => {
         // if no where clause is provided, send what is already there
         if (!variables["where"]) return true;

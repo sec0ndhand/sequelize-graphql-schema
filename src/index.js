@@ -219,7 +219,7 @@ const getSubscriptionObject = (mod, options) => {
         args: defaultArgs,
         description: `Subscribes to ${mod.name} changes.  The delete object will return an object that represents the where clause used to delete.`,
         subscribe: withFilter(
-          () => { if(pubSubIsDefined) { options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`) } },
+          () => { if(pubSubIsDefined) { return options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`) } else return {} },
           (payload, variables, more, more2) => {
             // if no where clause is provided, send what is already there
             if(!variables["where"]) return true;
