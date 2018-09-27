@@ -152,9 +152,9 @@ const getMutatationObject = (mod, options) => {
       [k]: kObj
     });
   });
-  const preMutationDefined = mod && mod.options && mod.options.classMethods && typeof mod.options.classMethods.preMutation === "function";
-  const postMutationDefined = mod && mod.options && mod.options.classMethods && typeof mod.options.classMethods.postMutation === "function";
-  const pubSubIsDefined = options && options.pubsub && options.pubsub.publish && typeof options.pubsub.publish === "function";
+  let preMutationDefined = mod && mod.options && mod.options.classMethods && typeof mod.options.classMethods.preMutation === "function";
+  let postMutationDefined = mod && mod.options && mod.options.classMethods && typeof mod.options.classMethods.postMutation === "function";
+  let pubSubIsDefined = options && options.pubsub && options.pubsub.publish && typeof options.pubsub.publish === "function";
   return {
     [`create${titleCase(mod.name)}`]: {
       type: modelTypes.find(modelT => modelT.name == mod.name),
@@ -254,14 +254,19 @@ const getMutatationObject = (mod, options) => {
 
 exports.getMutatationObject = getMutatationObject;
 
-const getSubscriptionObject = mod => {
+const getSubscriptionObject = (mod, options) => {
+  let pubSubIsDefined = options && options.pubsub && options.pubsub.publish && typeof options.pubsub.publish === "function";
   const defaultArgs = (0, _graphqlSequelize.defaultListArgs)(mod);
   return {
     [`${mod.name.toLowerCase()}_changed`]: {
       type: modelTypes.find(modelT => modelT.name == mod.name),
       args: defaultArgs,
       description: `Subscribes to ${mod.name} changes.  The delete object will return an object that represents the where clause used to delete.`,
-      subscribe: (0, _graphqlSubscriptions.withFilter)(() => pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`), (payload, variables, more, more2) => {
+      subscribe: (0, _graphqlSubscriptions.withFilter)(() => {
+        if (pubSubIsDefined) {
+          options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`);
+        }
+      }, (payload, variables, more, more2) => {
         // if no where clause is provided, send what is already there
         if (!variables["where"]) return true;
         const rtn = whereMatch(payload[`${mod.name.toLowerCase()}_changed`], variables["where"]);

@@ -130,13 +130,13 @@ export const getMutatationObject = (mod, options) => {
     updateArgs = {...updateArgs, [k]: kObj};
   });
 
-  const preMutationDefined = mod && mod.options && mod.options.classMethods &&
+  let preMutationDefined = mod && mod.options && mod.options.classMethods &&
     (typeof mod.options.classMethods.preMutation === "function")
 
-  const postMutationDefined = mod && mod.options && mod.options.classMethods &&
+  let postMutationDefined = mod && mod.options && mod.options.classMethods &&
     (typeof mod.options.classMethods.postMutation === "function")
 
-  const pubSubIsDefined = options && options.pubsub && options.pubsub.publish &&
+  let pubSubIsDefined = options && options.pubsub && options.pubsub.publish &&
     (typeof options.pubsub.publish === "function")
 
   return {
@@ -208,7 +208,9 @@ export const getMutatationObject = (mod, options) => {
  * @returns {Object}
  */
 
-const getSubscriptionObject = (mod) => {
+const getSubscriptionObject = (mod, options) => {
+  let pubSubIsDefined = options && options.pubsub && options.pubsub.publish &&
+    (typeof options.pubsub.publish === "function")
 
   const defaultArgs = defaultListArgs(mod);
   return {
@@ -217,7 +219,7 @@ const getSubscriptionObject = (mod) => {
         args: defaultArgs,
         description: `Subscribes to ${mod.name} changes.  The delete object will return an object that represents the where clause used to delete.`,
         subscribe: withFilter(
-          () => pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`),
+          () => { if(pubSubIsDefined) { options.pubsub.asyncIterator(`${mod.name.toLowerCase()}_changed`) } },
           (payload, variables, more, more2) => {
             // if no where clause is provided, send what is already there
             if(!variables["where"]) return true;
