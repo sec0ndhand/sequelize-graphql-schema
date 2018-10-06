@@ -145,9 +145,9 @@ export const getMutatationObject = (mod, options) => {
       args: _.assign(createArgs),
       description: `Creates a new ${mod.name}`,
       resolve: options.authenticated(async (obj, args) => {
-        if(preMutationDefined) args = mod.options.classMethods.preMutation(args);
+        if(preMutationDefined) args = mod.options.classMethods.preMutation(args, models);
         const ret = await mod.create(args);
-        if(postMutationDefined) ret = mod.options.classMethods.postMutation(ret);
+        if(postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
         if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
         }

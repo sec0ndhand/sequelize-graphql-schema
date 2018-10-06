@@ -164,9 +164,9 @@ const getMutatationObject = (mod, options) => {
       /*#__PURE__*/
       function () {
         var _ref2 = _asyncToGenerator(function* (obj, args) {
-          if (preMutationDefined) args = mod.options.classMethods.preMutation(args);
+          if (preMutationDefined) args = mod.options.classMethods.preMutation(args, models);
           const ret = yield mod.create(args);
-          if (postMutationDefined) ret = mod.options.classMethods.postMutation(ret);
+          if (postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
 
           if (pubSubIsDefined) {
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
