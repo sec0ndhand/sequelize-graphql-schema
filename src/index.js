@@ -169,7 +169,7 @@ export const getMutatationObject = (mod, options) => {
         let ret = await mod.findById(args[`${mod.name.toLowerCase()}_id`]);
         // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-        if(postMutationDefined) ret = mod.options.classMethods.postMutation(args, models);
+        if(postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
 
         if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
