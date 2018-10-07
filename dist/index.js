@@ -166,7 +166,7 @@ const getMutatationObject = (mod, options) => {
         var _ref2 = _asyncToGenerator(function* (obj, args) {
           var tmpArgs;
           if (preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
-          const ret = yield mod.create(tmpArgs);
+          let ret = yield mod.create(tmpArgs);
           if (postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
 
           if (pubSubIsDefined) {
@@ -199,7 +199,7 @@ const getMutatationObject = (mod, options) => {
               [`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]
             }
           });
-          const ret = yield mod.findById(args[`${mod.name.toLowerCase()}_id`]); // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
+          let ret = yield mod.findById(args[`${mod.name.toLowerCase()}_id`]); // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
           if (postMutationDefined) ret = mod.options.classMethods.postMutation(args, models);
 
@@ -240,6 +240,7 @@ const getMutatationObject = (mod, options) => {
           });
         }
 
+        let ret;
         if (postMutationDefined) ret = mod.options.classMethods.postMutation(tmpArgs, models);
         return mod.destroy({
           where

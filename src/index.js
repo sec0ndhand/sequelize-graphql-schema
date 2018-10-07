@@ -147,7 +147,7 @@ export const getMutatationObject = (mod, options) => {
       resolve: options.authenticated(async (obj, args) => {
         var tmpArgs;
         if(preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
-        const ret = await mod.create(tmpArgs);
+        let ret = await mod.create(tmpArgs);
         if(postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
         if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
@@ -166,7 +166,7 @@ export const getMutatationObject = (mod, options) => {
         if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models);
         await mod.update(tmpArgs, { where: {[`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]}});
         
-        const ret = await mod.findById(args[`${mod.name.toLowerCase()}_id`]);
+        let ret = await mod.findById(args[`${mod.name.toLowerCase()}_id`]);
         // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
         if(postMutationDefined) ret = mod.options.classMethods.postMutation(args, models);
@@ -196,7 +196,7 @@ export const getMutatationObject = (mod, options) => {
         if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:obj});
         }
-
+        let ret;
         if(postMutationDefined) ret = mod.options.classMethods.postMutation(tmpArgs, models);
         return mod.destroy({where})
       })
