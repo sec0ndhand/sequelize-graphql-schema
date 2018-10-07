@@ -145,8 +145,9 @@ export const getMutatationObject = (mod, options) => {
       args: _.assign(createArgs),
       description: `Creates a new ${mod.name}`,
       resolve: options.authenticated(async (obj, args) => {
-        if(preMutationDefined) args = mod.options.classMethods.preMutation(args, models);
-        const ret = await mod.create(args);
+        var tmpArgs;
+        if(preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
+        const ret = await mod.create(tmpArgs);
         if(postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
         if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
@@ -162,7 +163,7 @@ export const getMutatationObject = (mod, options) => {
       resolve: options.authenticated(async (obj, args) => {
         // return mod.save(args, {returning: true, validate: false});
         var tmpArgs;
-        if(preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
+        if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models);
         await mod.update(tmpArgs, { where: {[`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]}});
         
         const ret = await mod.findById(args[`${mod.name.toLowerCase()}_id`]);
