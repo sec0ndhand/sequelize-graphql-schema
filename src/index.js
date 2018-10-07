@@ -161,13 +161,14 @@ export const getMutatationObject = (mod, options) => {
       description: `Updates an existing ${mod.name}`,
       resolve: options.authenticated(async (obj, args) => {
         // return mod.save(args, {returning: true, validate: false});
-        if(preMutationDefined) args = mod.options.classMethods.preMutation(args);
-        await mod.update(args, { where: {[`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]}});
+        var tmpArgs;
+        if(preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
+        await mod.update(tmpArgs, { where: {[`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]}});
         
         const ret = await mod.findById(args[`${mod.name.toLowerCase()}_id`]);
         // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-        if(postMutationDefined) ret = mod.options.classMethods.postMutation(args);
+        if(postMutationDefined) ret = mod.options.classMethods.postMutation(args, models);
 
         if (pubSubIsDefined){
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
@@ -182,10 +183,10 @@ export const getMutatationObject = (mod, options) => {
       description: `Deletes an amount of ${mod.name}s`,
       resolve: options.authenticated((obj, args, context, info) => {
         // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
-        
-        if(preMutationDefined) args = mod.options.classMethods.preMutation(args);
-        let where = Object.keys(args.where).reduce((prev, k, i) => {
-          let value = args.where[k];
+        var tmpArgs;
+        if(preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
+        let where = Object.keys(tmpArgs.where).reduce((prev, k, i) => {
+          let value = tmpArgs.where[k];
           // console.log(typeof value);
           return {...prev, [k]: typeof value == 'function' ? value(info.variableValues) : value }          
         }, {})
@@ -195,7 +196,7 @@ export const getMutatationObject = (mod, options) => {
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:obj});
         }
 
-        if(postMutationDefined) ret = mod.options.classMethods.postMutation(args);
+        if(postMutationDefined) ret = mod.options.classMethods.postMutation(tmpArgs, models);
         return mod.destroy({where})
       })
     },

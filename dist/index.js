@@ -191,15 +191,16 @@ const getMutatationObject = (mod, options) => {
       function () {
         var _ref3 = _asyncToGenerator(function* (obj, args) {
           // return mod.save(args, {returning: true, validate: false});
-          if (preMutationDefined) args = mod.options.classMethods.preMutation(args);
-          yield mod.update(args, {
+          var tmpArgs;
+          if (preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
+          yield mod.update(tmpArgs, {
             where: {
               [`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]
             }
           });
           const ret = yield mod.findById(args[`${mod.name.toLowerCase()}_id`]); // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-          if (postMutationDefined) ret = mod.options.classMethods.postMutation(args);
+          if (postMutationDefined) ret = mod.options.classMethods.postMutation(args, models);
 
           if (pubSubIsDefined) {
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
@@ -222,9 +223,10 @@ const getMutatationObject = (mod, options) => {
       description: `Deletes an amount of ${mod.name}s`,
       resolve: options.authenticated((obj, args, context, info) => {
         // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
-        if (preMutationDefined) args = mod.options.classMethods.preMutation(args);
-        let where = Object.keys(args.where).reduce((prev, k, i) => {
-          let value = args.where[k]; // console.log(typeof value);
+        var tmpArgs;
+        if (preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
+        let where = Object.keys(tmpArgs.where).reduce((prev, k, i) => {
+          let value = tmpArgs.where[k]; // console.log(typeof value);
 
           return _objectSpread({}, prev, {
             [k]: typeof value == 'function' ? value(info.variableValues) : value
@@ -237,7 +239,7 @@ const getMutatationObject = (mod, options) => {
           });
         }
 
-        if (postMutationDefined) ret = mod.options.classMethods.postMutation(args);
+        if (postMutationDefined) ret = mod.options.classMethods.postMutation(tmpArgs, models);
         return mod.destroy({
           where
         });
