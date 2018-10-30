@@ -34,9 +34,9 @@ let modelNamesArray;
 let models;
 let authenticated;
 /**
- * @property pubSub - needs to implement asyncIterator, and publish functions
- * @property
- */
+* @property pubSub - needs to implement asyncIterator, and publish functions
+* @property
+*/
 
 const defaultOptions = {
   pubSub: {
@@ -160,14 +160,18 @@ const getMutatationObject = (mod, options) => {
       type: modelTypes.find(modelT => modelT.name == mod.name),
       args: _underscore._.assign(createArgs),
       description: `Creates a new ${mod.name}`,
+      // resolve: (obj, args, context, info) => {
+      //   return mod.create(args);
+      // }
       resolve: options.authenticated(
       /*#__PURE__*/
       function () {
-        var _ref2 = _asyncToGenerator(function* (obj, args) {
-          var tmpArgs;
-          if (preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
+        var _ref2 = _asyncToGenerator(function* (obj, args, context, info) {
+          var tmpArgs = args;
+          if (preMutationDefined) tmpArgs = yield mod.options.classMethods.preMutation(args, models);
+          console.log("tmpArgs", tmpArgs);
           let ret = yield mod.create(tmpArgs);
-          if (postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
+          if (postMutationDefined) ret = yield mod.options.classMethods.postMutation(ret, models);
 
           if (pubSubIsDefined) {
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
@@ -178,7 +182,7 @@ const getMutatationObject = (mod, options) => {
           return new Promise((rsv, rej) => rsv(ret));
         });
 
-        return function (_x5, _x6) {
+        return function (_x5, _x6, _x7, _x8) {
           return _ref2.apply(this, arguments);
         };
       }())
@@ -201,7 +205,7 @@ const getMutatationObject = (mod, options) => {
           });
           let ret = yield mod.findById(args[`${mod.name.toLowerCase()}_id`]); // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-          if (postMutationDefined) ret = mod.options.classMethods.postMutation(ret, models);
+          if (postMutationDefined) ret = yield mod.options.classMethods.postMutation(ret, models);
 
           if (pubSubIsDefined) {
             options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
@@ -213,7 +217,7 @@ const getMutatationObject = (mod, options) => {
           return new Promise((rsv, rej) => rsv(ret));
         });
 
-        return function (_x7, _x8) {
+        return function (_x9, _x10) {
           return _ref3.apply(this, arguments);
         };
       }())
@@ -222,38 +226,49 @@ const getMutatationObject = (mod, options) => {
       type: modelTypes.find(modelT => modelT.name == mod.name),
       args: _underscore._.assign(deleteArgs),
       description: `Deletes an amount of ${mod.name}s`,
-      resolve: options.authenticated((obj, args, context, info) => {
-        // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
-        var tmpArgs;
-        if (preMutationDefined) tmpArgs = mod.options.classMethods.preMutation(args, models);
-        let where = Object.keys(tmpArgs.where).reduce((prev, k, i) => {
-          let value = tmpArgs.where[k]; // console.log(typeof value);
+      resolve: options.authenticated(
+      /*#__PURE__*/
+      function () {
+        var _ref4 = _asyncToGenerator(function* (obj, args, context, info) {
+          // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
+          var tmpArgs;
+          if (preMutationDefined) tmpArgs = yield mod.options.classMethods.preMutation(args, models);
+          let where = Object.keys(tmpArgs.where).reduce((prev, k, i) => {
+            let value = tmpArgs.where[k]; // console.log(typeof value);
 
-          return _objectSpread({}, prev, {
-            [k]: typeof value == 'function' ? value(info.variableValues) : value
+            return _objectSpread({}, prev, {
+              [k]: typeof value == 'function' ? value(info.variableValues) : value
+            });
+          }, {}); // console.log(where);
+
+          if (pubSubIsDefined) {
+            options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
+              [`${mod.name.toLowerCase()}_changed`]: obj
+            });
+          }
+
+          let ret = yield mod.destroy({
+            where
           });
-        }, {}); // console.log(where);
-
-        if (pubSubIsDefined) {
-          options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {
-            [`${mod.name.toLowerCase()}_changed`]: obj
-          });
-        }
-
-        let ret;
-        if (postMutationDefined) ret = mod.options.classMethods.postMutation(tmpArgs, models);
-        return mod.destroy({
-          where
+          console.log(ret);
+          if (postMutationDefined) ret = yield mod.options.classMethods.postMutation(ret, models);
+          return new Promise((rsv, rej) => rsv({
+            [`${mod.name.toLowerCase()}_id`]: tmpArgs.where[`${mod.name.toLowerCase()}_id`]
+          }));
         });
-      })
+
+        return function (_x11, _x12, _x13, _x14) {
+          return _ref4.apply(this, arguments);
+        };
+      }())
     }
   };
 };
 /**
- *  
- * @param {Sequelize Model} mod 
- * @returns {Object}
- */
+*  
+* @param {Sequelize Model} mod 
+* @returns {Object}
+*/
 
 
 exports.getMutatationObject = getMutatationObject;
@@ -358,12 +373,12 @@ function titleCase(str) {
   }).join(' ');
 }
 /**
- * @name schema
- * @description given sequelize object, a GraphQL schema will be returned
- * @param {Array<SequelizeModel>} models 
- * @param {Object} options 
- * @returns {GraphQLSchema}
- */
+* @name schema
+* @description given sequelize object, a GraphQL schema will be returned
+* @param {Array<SequelizeModel>} models 
+* @param {Object} options 
+* @returns {GraphQLSchema}
+*/
 
 
 const schema = function schema(modeles, options) {
