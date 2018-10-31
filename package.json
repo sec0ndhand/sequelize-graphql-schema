@@ -1,6 +1,6 @@
 {
   "name": "sequelize-graphql-schema",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Schema Generator for sequelize-graphql, including create, update, delete, and mutation subscriptions.",
   "main": "index.js",
   "scripts": {
