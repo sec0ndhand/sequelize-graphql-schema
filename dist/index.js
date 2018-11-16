@@ -196,7 +196,7 @@ const getMutatationObject = (mod, options) => {
       function () {
         var _ref3 = _asyncToGenerator(function* (obj, args) {
           // return mod.save(args, {returning: true, validate: false});
-          var tmpArgs;
+          var tmpArgs = args;
           if (preMutationDefined) tmpArgs = yield mod.options.classMethods.preMutation(args, models);
           yield mod.update(tmpArgs, {
             where: {
@@ -231,7 +231,7 @@ const getMutatationObject = (mod, options) => {
       function () {
         var _ref4 = _asyncToGenerator(function* (obj, args, context, info) {
           // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
-          var tmpArgs;
+          var tmpArgs = args;
           if (preMutationDefined) tmpArgs = yield mod.options.classMethods.preMutation(args, models);
           let where = Object.keys(tmpArgs.where).reduce((prev, k, i) => {
             let value = tmpArgs.where[k]; // console.log(typeof value);

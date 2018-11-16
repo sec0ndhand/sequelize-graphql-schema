@@ -167,7 +167,7 @@ return {
     description: `Updates an existing ${mod.name}`,
     resolve: options.authenticated(async (obj, args) => {
       // return mod.save(args, {returning: true, validate: false});
-      var tmpArgs;
+      var tmpArgs = args;
       if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models);
       await mod.update(tmpArgs, { where: {[`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]}});
       
@@ -189,7 +189,7 @@ return {
     description: `Deletes an amount of ${mod.name}s`,
     resolve: options.authenticated(async (obj, args, context, info) => {
       // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
-      var tmpArgs;
+      var tmpArgs = args;
       if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models);
       let where = Object.keys(tmpArgs.where).reduce((prev, k, i) => {
         let value = tmpArgs.where[k];
