@@ -150,10 +150,10 @@ return {
     resolve: options.authenticated(async (obj, args, context, info) => {
       var tmpArgs = args;
       
-      if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models);
+      if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models, "create");
       console.log("tmpArgs", tmpArgs)
       let ret = await mod.create(tmpArgs);
-      if(postMutationDefined) ret = await mod.options.classMethods.postMutation(ret, models);
+      if(postMutationDefined) ret = await mod.options.classMethods.postMutation(ret, models, "create");
       if (pubSubIsDefined){
           options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
       }
@@ -168,13 +168,13 @@ return {
     resolve: options.authenticated(async (obj, args) => {
       // return mod.save(args, {returning: true, validate: false});
       var tmpArgs = args;
-      if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models);
+      if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models, "update");
       await mod.update(tmpArgs, { where: {[`${mod.name.toLowerCase()}_id`]: args[`${mod.name.toLowerCase()}_id`]}});
       
       let ret = await mod.findById(args[`${mod.name.toLowerCase()}_id`]);
       // console.log(`${titleCase(mod.name)}_changed`, {[`${titleCase(mod.name)}_changed`]: ret.dataValues});
 
-      if(postMutationDefined) ret = await mod.options.classMethods.postMutation(ret, models);
+      if(postMutationDefined) ret = await mod.options.classMethods.postMutation(ret, models, "update");
 
       if (pubSubIsDefined){
           options.pubsub.publish(`${mod.name.toLowerCase()}_changed`, {[`${mod.name.toLowerCase()}_changed`]:ret.dataValues});
@@ -190,7 +190,7 @@ return {
     resolve: options.authenticated(async (obj, args, context, info) => {
       // console.log(JSON.stringify({...argsToFindOptions(args)}, null, '\t') );
       var tmpArgs = args;
-      if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models);
+      if(preMutationDefined) tmpArgs = await mod.options.classMethods.preMutation(args, models, "delete");
       let where = Object.keys(tmpArgs.where).reduce((prev, k, i) => {
         let value = tmpArgs.where[k];
         // console.log(typeof value);
@@ -203,7 +203,7 @@ return {
       }
       let ret = await mod.destroy({where})
       console.log(ret)
-      if(postMutationDefined) ret = await mod.options.classMethods.postMutation(ret, models);
+      if(postMutationDefined) ret = await mod.options.classMethods.postMutation(ret, models, "delete");
       return new Promise((rsv, rej) => rsv({[`${mod.name.toLowerCase()}_id`]: tmpArgs.where[`${mod.name.toLowerCase()}_id`]}) );
     })
   },
@@ -305,7 +305,7 @@ const modObj = {
         type: new GraphQLNonNull(GraphQLInt)
       }
     },
-    resolve: options.authenticated(resolver(md, {dataLoader: true}))
+    resolve: options.authenticated(resolver(md, {dataLoader: true}), md)
   },
   [`${md.name}s`]: {
     type: new GraphQLList(found_type),
@@ -315,7 +315,7 @@ const modObj = {
         type: GraphQLInt
       }
     },
-    resolve: options.authenticated(resolver(md, {dataLoader: true}))
+    resolve: options.authenticated(resolver(md, {dataLoader: true}), md)
   }
 }
 return modObj;
